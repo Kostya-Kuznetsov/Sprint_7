@@ -77,3 +77,4 @@ class TestCreateCourier:
             }
             response2 = requests.post(url_create_courier, data=payload)
             assert response2.status_code == 409, f"Ожидаемый статус 409, полученный {response.status_code}"
+            assert response.json()['message'] == "Этот логин уже используется. Попробуйте другой."
