@@ -46,34 +46,38 @@ class TestLoginCourier:
             assert response.json()['message'] == "Недостаточно данных для входа", \
                 f"Ожидаемое сообщение 'Недостаточно данных для входа', полученное {response.json()['message']}"
 
-    @pytest.mark.parametrize("login_value, password_value, allure_title, step_description", [
-        (lambda creds: generate_random_string(7),  # некорректный логин
-         lambda creds: creds.get('password'),
-         "Проверка появления ошибки при авторизации с некорректным логином",
-         "Авторизуемся с некорректным именем пользователя"),
-
-        (lambda creds: creds.get('login'),  # некорректный пароль
-         lambda creds: generate_random_string(7),
-         "Проверка появления ошибки при авторизации с некорректным паролем",
-         "Авторизуемся с некорректным паролем"),
-
-        (lambda creds: generate_random_string(7),  # некорректный логин и пароль
-         lambda creds: generate_random_string(7),
-         "Проверка появления ошибки при авторизации с некорректным именем пользователя и паролем",
-         "Авторизуемся с некорректным именем пользователя и паролем"),
-    ])
-    @allure.title("{allure_title}")
-    def test_courier_login_invalid_credentials(self, login_value, password_value, allure_title, step_description):
-        with allure.step("Создаём нового курьера"):
-            login_pass = registration_courier()
-
+    @allure.title("Проверка ошибки при авторизации с некорректным логином")
+    def test_courier_login_invalid_login(self):
+        login_pass = registration_courier()
         payload = {
-            "login": login_value(login_pass) if callable(login_value) else login_value,
-            "password": password_value(login_pass) if callable(password_value) else password_value,
+            "login": generate_random_string(7),  # некорректный логин
+            "password": login_pass.get('password'),
         }
-
-        with allure.step(step_description):
+        with allure.step("Авторизуемся с некорректным именем пользователя"):
             response = requests.post(url_courier_login, json=payload)
-            assert response.status_code == 404, f"Ожидаемый статус 404, но полученный {response.status_code}"
-            assert response.json()['message'] == "Учетная запись не найдена", \
-                f"Ожидаемое сообщение 'Учетная запись не найдена', полученное сообщение {response.json()['message']}"
+        assert response.status_code == 404
+        assert response.json()['message'] == "Учетная запись не найдена"
+
+    @allure.title("Проверка ошибки при авторизации с некорректным паролем")
+    def test_courier_login_invalid_password(self):
+        login_pass = registration_courier()
+        payload = {
+            "login": login_pass.get('login'),
+            "password": generate_random_string(7),  # некорректный пароль
+        }
+        with allure.step("Авторизуемся с некорректным паролем"):
+            response = requests.post(url_courier_login, json=payload)
+        assert response.status_code == 404
+        assert response.json()['message'] == "Учетная запись не найдена"
+
+    @allure.title("Проверка ошибки при авторизации с некорректным логином и паролем")
+    def test_courier_login_invalid_login_and_password(self):
+        login_pass = registration_courier()
+        payload = {
+            "login": generate_random_string(7),  # некорректный логин
+            "password": generate_random_string(7),  # некорректный пароль
+        }
+        with allure.step("Авторизуемся с некорректным именем пользователя и паролем"):
+            response = requests.post(url_courier_login, json=payload)
+        assert response.status_code == 404
+        assert response.json()['message'] == "Учетная запись не найдена"
