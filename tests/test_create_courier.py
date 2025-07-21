@@ -7,11 +7,12 @@ from urls import *
 class TestCreateCourier:
 
     @allure.title('Создаем нового курьера, c обязательными полями')
-    def test_create_new_courier(self):
-        payload = generate_random_login_password_name()
-        response = requests.post(url_create_courier, data=payload)
-        assert response.status_code == 201, f"Ожидаемый статус 201, полученный {response.status_code}"
-        assert response.json() == {'ok': True}
+    def test_create_new_courier(self, courier):
+
+        login_response = requests.post(url_courier_login,
+                                       data={'login': courier['login'], 'password': courier['password']})
+        assert login_response.status_code == 200, f"Не удалось залогиниться под новым курьером, статус {login_response.status_code}"
+        assert 'id' in login_response.json(), "В ответе нет id курьера"
 
     @allure.title('Проверка, появления ошибки при регистрации уже существующего в системе курьера')
     def test_cant_create_two_identical_couriers(self):
